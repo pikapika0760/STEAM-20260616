@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Here & Trend (完全プロトタイプ)</title>
+    <title>Here & Trend (鳥取プロトタイプ)</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <!-- Vue.js -->
@@ -37,9 +37,9 @@
             <div v-if="currentTab === 'map'" class="space-y-6">
                 <!-- マップエリア -->
                 <section class="bg-slate-700 rounded-2xl p-4 shadow-inner relative overflow-hidden h-48 flex flex-col justify-end">
-                    <div class="absolute inset-0 bg-cover bg-center opacity-40" style="background-image: url('https://maps.googleapis.com/maps/api/staticmap?center=35.67,139.71&zoom=15&size=400x200&sensor=false');"></div>
+                    <div class="absolute inset-0 bg-cover bg-center opacity-40" style="background-image: url('https://maps.googleapis.com/maps/api/staticmap?center=35.4936,134.2264&zoom=15&size=400x200&sensor=false');"></div>
                     <div class="absolute inset-0 bg-gradient-to-t from-slate-900 to-transparent"></div>
-                    <span class="absolute top-3 left-3 bg-pink-500 text-xs px-2 py-1 rounded-full font-bold shadow animate-pulse">現在地: 原宿周辺</span>
+                    <span class="absolute top-3 left-3 bg-pink-500 text-xs px-2 py-1 rounded-full font-bold shadow animate-pulse">現在地: 鳥取駅周辺</span>
                     
                     <p class="relative z-10 text-xs text-slate-300 font-bold mb-1">📍 近くのショップ（タップして在庫を確認）</p>
                     <div class="relative z-10 flex space-x-2 overflow-x-auto pb-2 scrollbar-none">
@@ -124,14 +124,14 @@
                 </div>
             </div>
 
-            <!-- ==================== 4. 【マイページ】画面（文字色を白へ修正） ==================== -->
+            <!-- ==================== 4. 【マイページ】画面 ==================== -->
             <div v-if="currentTab === 'profile'" class="space-y-6 text-center py-6">
                 <div class="space-y-2">
                     <div class="w-24 h-24 rounded-full bg-gradient-to-tr from-pink-500 to-purple-500 mx-auto p-1 shadow-xl">
                         <div class="w-full h-full bg-slate-800 rounded-full flex items-center justify-center text-3xl">🎒</div>
                     </div>
                     <h2 class="text-lg font-bold">トレンド大好きJK ✌️</h2>
-                    <p class="text-xs text-slate-400">よく行くエリア：原宿・渋谷</p>
+                    <p class="text-xs text-slate-400">よく行くエリア：鳥取駅前・鳥取北イオン</p>
                 </div>
 
                 <!-- 実績カウンター -->
@@ -146,7 +146,7 @@
                     </div>
                 </div>
 
-                <!-- 設定・管理メニュー（すべて白・薄グレーベースに統一） -->
+                <!-- 設定・管理メニュー -->
                 <div class="text-left bg-slate-700/30 rounded-2xl border border-slate-700 divide-y divide-slate-700/50 overflow-hidden">
                     <div v-for="menu in ['通知設定', 'お気に入り店舗の管理', 'お気に入りアイテムの管理', 'マイコーデ投稿の管理', '広告を非表示にする（プレミアム）', 'ヘルプ・お問い合わせ']" 
                          @click="mockAction(menu)" class="p-4 text-sm font-bold flex justify-between items-center active:bg-slate-700/50 cursor-pointer">
@@ -183,11 +183,11 @@
             setup() {
                 const currentTab = ref('map');
 
-                // 1. 店舗データ
+                // 1. 店舗データ（「鳥取北イオン」に変更しました！）
                 const shops = ref([
-                    { id: 1, name: 'WEGO 原宿店', distance: '現在地から150m' },
-                    { id: 2, name: 'GU 原宿店', distance: '現在地から300m' },
-                    { id: 3, name: '古着屋 KINJI', distance: '現在地から450m' }
+                    { id: 1, name: '鳥取北イオン', distance: '現在地から車で15分' },
+                    { id: 2, name: '丸由百貨店（OIOI跡）', distance: '現在地から150m' },
+                    { id: 3, name: '鳥取駅前周辺のショップ', distance: '現在地から300m' }
                 ]);
                 const selectedShop = ref(shops.value[0]);
 
@@ -213,7 +213,7 @@
                 const selectShop = (shop) => { selectedShop.value = shop; };
                 const stockLabel = (stock) => stock === 'in_stock' ? '◯ あり' : stock === 'few' ? '△ 残りわずか' : '× なし';
                 const stockClass = (stock) => stock === 'in_stock' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : stock === 'few' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30 font-bold' : 'bg-rose-500/20 text-rose-400 border border-rose-500/30 opacity-60';
-                const openNav = () => { window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(selectedShop.value.name)}`, '_blank'); };
+                const openNav = () => { window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(selectedShop.value.name + ' 鳥取')}`, '_blank'); };
 
                 // 2. トレンドデータ
                 const trendFeed = ref([
@@ -225,8 +225,8 @@
 
                 // 3. コーデ投稿データ
                 const coordPosts = ref([
-                    { id: 1, user: 'minami._.o0', age: '高2', time: '10分前', caption: 'WEGOのカーゴパンツまじで形綺麗すぎて2色買いした…！😭💖 今日は上にチビT合わせてストリートっぽくしてみたよ〜。', likes: 142, comments: 8, image: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=400' },
-                    { id: 2, user: 'ハルト_furugi', age: '高3', time: '2時間前', caption: 'KINJIで買ったトラックジャケットが主役。古着ミックスが最近のマイブームです。', likes: 98, comments: 3, image: 'https://images.unsplash.com/photo-1509631179647-0177331693ae?w=400' }
+                    { id: 1, user: 'minami._.o0', age: '高2', time: '10分前', caption: '鳥取北イオンで買ったカーゴパンツまじで形綺麗すぎて2色買いした…！😭💖 今日は上にチビT合わせてストリートっぽくしてみたよ〜。', likes: 142, comments: 8, image: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=400' },
+                    { id: 2, user: 'ハルト_furugi', age: '高3', time: '2時間前', caption: '北イオンをぶらぶら。トラックジャケットが主役。古着ミックスが最近のマイブームです。', likes: 98, comments: 3, image: 'https://images.unsplash.com/photo-1509631179647-0177331693ae?w=400' }
                 ]);
 
                 const mockAction = (text) => { alert(`【プロトタイプ動作】\n将来的に「${text}」画面がここに実装されます！`); };
