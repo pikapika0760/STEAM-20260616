@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Here & Trend (完全プロトタイプ)</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <!-- Vue.js -->
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <style>
+        body { font-family: 'Helvetica Neue', Arial, sans-serif; }
+        /* スクロールバーを非表示にする設定 */
+        .scrollbar-none::-webkit-scrollbar { display: none; }
+        .scrollbar-none { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="bg-slate-900 text-white min-h-screen flex justify-center">
+
+    <div id="app" class="w-full max-w-md bg-slate-800 min-h-screen shadow-2xl flex flex-col justify-between relative pb-16">
+        
+        <!-- ヘッダー -->
+        <header class="p-4 bg-gradient-to-r from-pink-500 to-purple-500 text-center font-bold text-xl tracking-wider rounded-b-2xl shadow-lg sticky top-0 z-50">
+            ✨ Here & Trend ✨
+            <p class="text-xs font-normal opacity-80 mt-1">
+                {{ currentTab === 'map' ? '今ココから見つけるトレンド' : '' }}
+                {{ currentTab === 'trend' ? 'SNSで今リアルにバズってる服' : '' }}
+                {{ currentTab === 'coord' ? 'みんなのリアルな推しコーデ' : '' }}
+                {{ currentTab === 'profile' ? 'マイページ' : '' }}
+            </p>
+        </header>
+
+        <!-- メインコンテンツ -->
+        <main class="p-4 space-y-6 overflow-y-auto flex-1">
+            
+            <!-- ==================== 1. 【探す（マップ）】画面 ==================== -->
+            <div v-if="currentTab === 'map'" class="space-y-6">
+                <!-- マップエリア -->
+                <section class="bg-slate-700 rounded-2xl p-4 shadow-inner relative overflow-hidden h-48 flex flex-col justify-end">
+                    <div class="absolute inset-0 bg-cover bg-center opacity-40" style="background-image: url('https://maps.googleapis.com/maps/api/staticmap?center=35.67,139.71&zoom=15&size=400x200&sensor=false');"></div>
+                    <div class="absolute inset-0 bg-gradient-to-t from-slate-900 to-transparent"></div>
+                    <span class="absolute top-3 left-3 bg-pink-500 text-xs px-2 py-1 rounded-full font-bold shadow animate-pulse">現在地: 原宿周辺</span>
+                    
+                    <p class="relative z-10 text-xs text-slate-300 font-bold mb-1">📍 近くのショップ（タップして在庫を確認）</p>
+                    <div class="relative z-10 flex space-x-2 overflow-x-auto pb-2 scrollbar-none">
+                        <button v-for="shop in shops" :key="shop.id" @click="selectShop(shop)"
+                            :class="selectedShop.id === shop.id ? 'bg-pink-500 text-white scale-105' : 'bg-slate-800 text-slate-200'"
+                            class="flex-shrink-0 px-4 py-2 rounded-xl text-sm font-bold transition-all shadow-md active:scale-95">
+                            {{ shop.name }}
+                        </button>
+                    </div>
+                </section>
+
+                <!-- 在庫情報 -->
+                <section class="bg-slate-800 border border-slate-700 rounded-2xl p-4 shadow-lg">
+                    <div class="flex justify-between items-center mb-3">
+                        <h3 class="text-md font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-400 to-purple-400">
+                            🏬 {{ selectedShop.name }} のトレンド在庫
+                        </h3>
+                        <span class="text-xs bg-slate-700 text-slate-300 px-2 py-0.5 rounded-full">{{ selectedShop.distance }}</span>
+                    </div>
+                    
+                    <div class="space-y-3">
+                        <div v-for="item in currentInventory" :key="item.id" class="flex items-center bg-slate-700/50 p-3 rounded-xl border border-slate-700/50">
+                            <img :src="item.image" class="w-12 h-12 rounded-lg object-cover bg-slate-600 mr-3">
+                            <div class="flex-1">
+                                <p class="text-sm font-bold">{{ item.name }}</p>
+                                <p class="text-xs text-purple-300">{{ item.tag }}</p>
+                            </div>
+                            <div class="text-right">
+                                <span :class="stockClass(item.stock)" class="text-xs font-bold px-3 py-1 rounded-full shadow-sm">
+                                    {{ stockLabel(item.stock) }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button @click="openNav" class="w-full mt-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white py-2.5 rounded-xl font-bold text-sm shadow-md active:scale-98 transition-all">
+                        🚀 このお店への行き方（ルート案内）
+                    </button>
+                </section>
+            </div>
+
+            <!-- ==================== 2. 【トレンド】画面 ==================== -->
+            <div v-if="currentTab === 'trend'" class="space-y-4">
+                <div class="grid grid-cols-2 gap-4">
+                    <div v-for="trend in trendFeed" :key="trend.id" class="bg-slate-700 rounded-2xl overflow-hidden shadow-lg border border-slate-600/50">
+                        <div class="relative">
+                            <img :src="trend.image" class="w-full h-40 object-cover">
+                            <span class="absolute top-2 left-2 bg-purple-600 text-[10px] px-2 py-0.5 rounded-full font-bold">🔥 {{ trend.views }}万回再生</span>
+                        </div>
+                        <div class="p-3 space-y-1">
+                            <p class="text-xs font-bold text-pink-400">{{ trend.sns }}でバズ中</p>
+                            <p class="text-sm font-bold line-clamp-1">{{ trend.title }}</p>
+                            <p class="text-[11px] text-slate-300">{{ trend.tag }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ==================== 3. 【コーデ】画面 ==================== -->
+            <div v-if="currentTab === 'coord'" class="space-y-4">
+                <div class="bg-slate-700 p-3 rounded-xl flex items-center justify-between border border-slate-600">
+                    <span class="text-sm text-slate-400">キミの今日のコーデもシェアしよ！</span>
+                    <button @click="mockAction('写真アップロード画面が開きます')" class="bg-pink-500 text-xs font-bold px-3 py-1.5 rounded-lg shadow">投稿する 📸</button>
+                </div>
+
+                <div v-for="post in coordPosts" :key="post.id" class="bg-slate-700/60 rounded-2xl p-4 space-y-3 border border-slate-700">
+                    <div class="flex items-center space-x-2">
+                        <div class="w-8 h-8 rounded-full bg-gradient-to-tr from-pink-400 to-purple-500 flex items-center justify-center font-bold text-xs text-white">
+                            {{ post.user[0] }}
+                        </div>
+                        <div>
+                            <p class="text-xs font-bold">{{ post.user }} <span class="text-slate-400 font-normal">({{ post.age }})</span></p>
+                            <p class="text-[10px] text-slate-400">{{ post.time }}</p>
+                        </div>
+                    </div>
+                    <p class="text-sm">{{ post.caption }}</p>
+                    <img :src="post.image" class="w-full h-64 object-cover rounded-xl shadow-md">
+                    <div class="flex space-x-4 text-xs text-slate-400">
+                        <span>❤️ {{ post.likes }}</span>
+                        <span>💬 {{ post.comments }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ==================== 4. 【マイページ】画面（文字色を白へ修正） ==================== -->
+            <div v-if="currentTab === 'profile'" class="space-y-6 text-center py-6">
+                <div class="space-y-2">
+                    <div class="w-24 h-24 rounded-full bg-gradient-to-tr from-pink-500 to-purple-500 mx-auto p-1 shadow-xl">
+                        <div class="w-full h-full bg-slate-800 rounded-full flex items-center justify-center text-3xl">🎒</div>
+                    </div>
+                    <h2 class="text-lg font-bold">トレンド大好きJK ✌️</h2>
+                    <p class="text-xs text-slate-400">よく行くエリア：原宿・渋谷</p>
+                </div>
+
+                <!-- 実績カウンター -->
+                <div class="grid grid-cols-2 gap-2 max-w-xs mx-auto">
+                    <div class="bg-slate-700/50 p-3 rounded-xl border border-slate-700">
+                        <p class="text-xs text-slate-400">保存したアイテム</p>
+                        <p class="text-lg font-bold text-pink-400">12 個</p>
+                    </div>
+                    <div class="bg-slate-700/50 p-3 rounded-xl border border-slate-700">
+                        <p class="text-xs text-slate-400">マイコーデ投稿</p>
+                        <p class="text-lg font-bold text-purple-400">4 本</p>
+                    </div>
+                </div>
+
+                <!-- 設定・管理メニュー（すべて白・薄グレーベースに統一） -->
+                <div class="text-left bg-slate-700/30 rounded-2xl border border-slate-700 divide-y divide-slate-700/50 overflow-hidden">
+                    <div v-for="menu in ['通知設定', 'お気に入り店舗の管理', 'お気に入りアイテムの管理', 'マイコーデ投稿の管理', '広告を非表示にする（プレミアム）', 'ヘルプ・お問い合わせ']" 
+                         @click="mockAction(menu)" class="p-4 text-sm font-bold flex justify-between items-center active:bg-slate-700/50 cursor-pointer">
+                        <span class="text-slate-200">{{ menu }}</span>
+                        <span class="text-slate-500">＞</span>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+
+        <!-- 画面下のナビゲーションバー -->
+        <nav class="absolute bottom-0 inset-x-0 h-16 bg-slate-900 border-t border-slate-800 flex justify-around items-center rounded-t-2xl shadow-2xl">
+            <button @click="currentTab = 'map'" :class="currentTab === 'map' ? 'text-pink-500 scale-110' : 'text-slate-500'" class="flex flex-col items-center transition-all">
+                <span class="text-xl">📍</span><span class="text-[10px] font-bold">探す</span>
+            </button>
+            <button @click="currentTab = 'trend'" :class="currentTab === 'trend' ? 'text-pink-500 scale-110' : 'text-slate-500'" class="flex flex-col items-center transition-all">
+                <span class="text-xl">🔥</span><span class="text-[10px] font-bold">トレンド</span>
+            </button>
+            <button @click="currentTab = 'coord'" :class="currentTab === 'coord' ? 'text-pink-500 scale-110' : 'text-slate-500'" class="flex flex-col items-center transition-all">
+                <span class="text-xl">📸</span><span class="text-[10px] font-bold">コーデ</span>
+            </button>
+            <button @click="currentTab = 'profile'" :class="currentTab === 'profile' ? 'text-pink-500 scale-110' : 'text-slate-500'" class="flex flex-col items-center transition-all">
+                <span class="text-xl">👤</span><span class="text-[10px] font-bold">マイ</span>
+            </button>
+        </nav>
+
+    </div>
+
+    <script>
+        const { createApp, ref, computed } = Vue;
+
+        createApp({
+            setup() {
+                const currentTab = ref('map');
+
+                // 1. 店舗データ
+                const shops = ref([
+                    { id: 1, name: 'WEGO 原宿店', distance: '現在地から150m' },
+                    { id: 2, name: 'GU 原宿店', distance: '現在地から300m' },
+                    { id: 3, name: '古着屋 KINJI', distance: '現在地から450m' }
+                ]);
+                const selectedShop = ref(shops.value[0]);
+
+                // 在庫データ
+                const inventories = {
+                    1: [
+                        { id: 'A', name: 'ルーズカーゴパンツ', tag: '#ストリート系', stock: 'few', image: 'https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?w=100&auto=format&fit=crop&q=60' },
+                        { id: 'B', name: 'ちびT（クロップド丈）', tag: '#Y2Kファッション', stock: 'in_stock', image: 'https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?w=100&auto=format&fit=crop&q=60' },
+                        { id: 'C', name: 'シアーニットカーデ', tag: '#韓国女子', stock: 'out', image: 'https://images.unsplash.com/photo-1620799140408-edc6dcb6d633?w=100&auto=format&fit=crop&q=60' }
+                    ],
+                    2: [
+                        { id: 'A', name: 'ルーズカーゴパンツ', tag: '#ストリート系', stock: 'in_stock', image: 'https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?w=100&auto=format&fit=crop&q=60' },
+                        { id: 'B', name: 'ちびT（クロップド丈）', tag: '#Y2Kファッション', stock: 'out', image: 'https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?w=100&auto=format&fit=crop&q=60' },
+                        { id: 'C', name: 'シアーニットカーデ', tag: '#韓国女子', stock: 'few', image: 'https://images.unsplash.com/photo-1620799140408-edc6dcb6d633?w=100&auto=format&fit=crop&q=60' }
+                    ],
+                    3: [
+                        { id: 'D', name: 'ヴィンテージ トラックジャケット', tag: '#古着ミックス', stock: 'few', image: 'https://images.unsplash.com/photo-1551028719-00167b16eac5?w=100&auto=format&fit=crop&q=60' },
+                        { id: 'A', name: 'ルーズカーゴパンツ', tag: '#ストリート系', stock: 'out', image: 'https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?w=100&auto=format&fit=crop&q=60' }
+                    ]
+                };
+
+                const currentInventory = computed(() => inventories[selectedShop.value.id] || []);
+                const selectShop = (shop) => { selectedShop.value = shop; };
+                const stockLabel = (stock) => stock === 'in_stock' ? '◯ あり' : stock === 'few' ? '△ 残りわずか' : '× なし';
+                const stockClass = (stock) => stock === 'in_stock' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : stock === 'few' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30 font-bold' : 'bg-rose-500/20 text-rose-400 border border-rose-500/30 opacity-60';
+                const openNav = () => { window.open(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(selectedShop.value.name)}`, '_blank'); };
+
+                // 2. トレンドデータ
+                const trendFeed = ref([
+                    { id: 1, sns: 'TikTok', title: '激細見えする「ちびT」まとめ', tag: '#Y2K #ストリート', views: 42.5, image: 'https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?w=300' },
+                    { id: 2, sns: 'Instagram', title: '韓国女子っぽシアーシャツ着回し', tag: '#韓国ファッション', views: 18.2, image: 'https://images.unsplash.com/photo-1620799140408-edc6dcb6d633?w=300' },
+                    { id: 3, sns: 'TikTok', title: '下北沢で発掘したトラックジャケット', tag: '#古着男子 #メンズライク', views: 31.0, image: 'https://images.unsplash.com/photo-1551028719-00167b16eac5?w=300' },
+                    { id: 4, sns: 'Instagram', title: '夏の優勝カーゴパンツはこれ', tag: '#プチプラコーデ', views: 25.4, image: 'https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?w=300' }
+                ]);
+
+                // 3. コーデ投稿データ
+                const coordPosts = ref([
+                    { id: 1, user: 'minami._.o0', age: '高2', time: '10分前', caption: 'WEGOのカーゴパンツまじで形綺麗すぎて2色買いした…！😭💖 今日は上にチビT合わせてストリートっぽくしてみたよ〜。', likes: 142, comments: 8, image: 'https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=400' },
+                    { id: 2, user: 'ハルト_furugi', age: '高3', time: '2時間前', caption: 'KINJIで買ったトラックジャケットが主役。古着ミックスが最近のマイブームです。', likes: 98, comments: 3, image: 'https://images.unsplash.com/photo-1509631179647-0177331693ae?w=400' }
+                ]);
+
+                const mockAction = (text) => { alert(`【プロトタイプ動作】\n将来的に「${text}」画面がここに実装されます！`); };
+
+                return {
+                    currentTab,
+                    shops,
+                    selectedShop,
+                    currentInventory,
+                    selectShop,
+                    stockLabel,
+                    stockClass,
+                    openNav,
+                    trendFeed,
+                    coordPosts,
+                    mockAction
+                };
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>
